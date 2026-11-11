@@ -122,6 +122,21 @@ export const sgPack: RulePack = {
       fix: 'If it is real, remove it, change it, and read it from the environment or a secret store.',
     },
     {
+      id: 'env-secret',
+      label: 'Password or secret in config file',
+      severity: 'review',
+      // Unquoted .env style lines, such as PASSWORD=abc12345 or export API_KEY=...
+      // Quoted values are covered by generic-secret. Names must be upper case (the .env
+      // convention) to keep ordinary code assignments out.
+      pattern:
+        /^\s*(?:export\s+)?[A-Z0-9_]*(?:PASSWORD|PASSWD|PWD|SECRET|API_?KEY|TOKEN)[A-Z0-9_]*\s*=\s*(?<value>[^\s"'`#]{8,})\s*(?:#.*)?$/dg,
+      skip: (v): MatchSkip | undefined =>
+        v.startsWith('$') || isPlaceholder(v) ? 'placeholder' : undefined,
+      mask: () => maskAll(),
+      reason: 'A password, secret, API key or token is set in a config or .env file.',
+      fix: 'If it is real, remove the file from what you share, change the secret, and keep .env files out of the dataset.',
+    },
+    {
       id: 'passport',
       label: 'Passport number',
       severity: 'review',
