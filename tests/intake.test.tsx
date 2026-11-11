@@ -63,7 +63,7 @@ describe('file intake and scan flow', () => {
     ])
     expect(await screen.findByRole('heading', { name: 'Likely blocked' })).toBeInTheDocument()
     expect(screen.getByText('4 scanned · 0 skipped')).toBeInTheDocument()
-    expect(screen.getByText('5 likely to block · 13 to review')).toBeInTheDocument()
+    expect(screen.getByText(/^5 likely to block · 13 to review · 1 role email address \(such as support@\) not flagged$/)).toBeInTheDocument()
     expect(workers[0]!.terminated).toBe(true)
   })
 
@@ -87,7 +87,7 @@ describe('file intake and scan flow', () => {
     render(<App createWorker={() => (worker = new FakeWorker(true))} />)
     pick([asFile('a.txt', 'S8412369B')])
     await waitFor(() => expect(worker?.posted).toHaveLength(1))
-    expect(screen.getByRole('status')).toHaveTextContent('Scanning file 1 of 1')
+    expect(screen.getByText('Scanning file 1 of 1')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(worker!.terminated).toBe(true)

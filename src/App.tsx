@@ -1,16 +1,16 @@
 import { useRef, useState } from 'react'
+import { CopyReport } from './components/CopyReport'
 import { DropZone } from './components/DropZone'
+import { FindingList } from './components/FindingList'
+import { KnownGaps } from './components/KnownGaps'
+import { NetworkProof } from './components/NetworkProof'
 import { ScanProgress } from './components/ScanProgress'
-import { type IntakeFile, SKIP_REASON_TEXT, readIntake } from './lib/readFiles'
+import { Verdict } from './components/Verdict'
+import { type IntakeFile, readIntake } from './lib/readFiles'
+import { NOTICE_TEXT, buildReport } from './lib/report'
+import { sgPack } from './rules'
 import { type ScanHandle, type WorkerLike, createScannerWorker, startScan } from './worker/client'
-import {
-  type DoneMessage,
-  type Finding,
-  type SkippedFile,
-  SKIP_REASONS,
-  VERDICT_TEXT,
-  countsText,
-} from './worker/protocol'
+import type { DoneMessage, Finding, SkippedFile } from './worker/protocol'
 
 export const APP_TITLE = 'SellerCheck SG'
 export const UNOFFICIAL_LABEL = 'Unofficial, not affiliated with HUD or DataVendor'
@@ -75,6 +75,12 @@ export default function App({ createWorker = createScannerWorker }: Props) {
   }
 
   const busy = state.kind === 'reading' || state.kind === 'scanning'
+  // Shown on every state (FR9); directly under the verdict when there is a result.
+  const notice = (
+    <p role="note" className="rounded-lg border border-slate-300 bg-slate-100 p-4 text-sm text-slate-800">
+      {NOTICE_TEXT}
+    </p>
+  )
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -106,44 +112,23 @@ export default function App({ createWorker = createScannerWorker }: Props) {
           <ScanProgress done={state.done} total={state.total} path={state.path} onCancel={onCancel} />
         )}
 
-        {state.kind === 'done' && <ResultSummary result={state.result} skipped={state.skipped} />}
+        {state.kind === 'done' && (
+          <>
+            <Verdict result={state.result} skipped={state.skipped} />
+            {notice}
+            <CopyReport text={buildReport(state.result, state.findings, state.skipped, sgPack.knownGaps)} />
+            <FindingList findings={state.findings} />
+          </>
+        )}
+
+        {state.kind !== 'done' && notice}
+        <KnownGaps gaps={sgPack.knownGaps} />
+        <NetworkProof />
       </main>
 
       <footer className="mx-auto max-w-4xl px-4 pb-10 text-sm text-slate-600">
-        <p>
-          Advice only. A clean result is not permission to sell data and is not legal advice.
-        </p>
+        <p>Unofficial concept built only from public pages and docs. Not a HUD or DataVendor product.</p>
       </footer>
     </div>
-  )
-}
-
-// Interim result view: verdict, counts and skipped files. The finding list comes in the next step.
-function ResultSummary({ result, skipped }: { result: DoneMessage; skipped: SkippedFile[] }) {
-  return (
-    <section aria-label="Result" className="rounded-lg border border-slate-200 bg-white p-6">
-      <h2 className="text-lg font-semibold">{VERDICT_TEXT[result.verdict]}</h2>
-      <p className="mt-1 text-sm text-slate-600">{countsText(result.scanned, result.skipped)}</p>
-      <p className="mt-3 text-sm">
-        {result.totals.blocker} likely to block · {result.totals.review} to review
-      </p>
-      {skipped.length > 0 && (
-        <details className="mt-4 text-sm">
-          <summary className="cursor-pointer">Skipped files ({skipped.length})</summary>
-          <ul className="mt-2 space-y-1">
-            {SKIP_REASONS.filter((r) => result.skippedByReason[r] > 0).map((r) => (
-              <li key={r}>
-                {SKIP_REASON_TEXT[r]}: {result.skippedByReason[r]}
-              </li>
-            ))}
-          </ul>
-          <ul className="mt-2 max-h-48 overflow-auto font-mono text-xs text-slate-600">
-            {skipped.map((s) => (
-              <li key={`${s.reason}:${s.path}`}>{s.path}</li>
-            ))}
-          </ul>
-        </details>
-      )}
-    </section>
   )
 }
