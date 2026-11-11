@@ -81,6 +81,16 @@ describe('readIntake', () => {
     ])
   })
 
+  it('reads UTF-16 with a byte order mark (Excel "Unicode Text") instead of skipping it as binary', async () => {
+    const text = 'nric\tS8412369B'
+    const le = new Uint8Array(2 + text.length * 2)
+    le.set([0xff, 0xfe])
+    for (let i = 0; i < text.length; i++) le[2 + i * 2] = text.charCodeAt(i)
+    const intake = await readIntake([{ path: 'export.txt', size: le.length, read: async () => le.buffer }])
+    expect(intake.files).toEqual([{ path: 'export.txt', text }])
+    expect(intake.skipped).toEqual([])
+  })
+
   it('stops reading when cancelled', async () => {
     let calls = 0
     const intake = await readIntake([file('a.txt'), file('b.txt')], [], () => calls++ > 0)

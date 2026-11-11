@@ -109,7 +109,14 @@ function looksBinary(bytes: Uint8Array): boolean {
   return false
 }
 
-/** Triage, then read the accepted files as UTF-8 text. */
+/** UTF-16 text (for example Excel's "Unicode Text" export) has NUL bytes but a byte order mark. */
+function utf16Encoding(bytes: Uint8Array): 'utf-16le' | 'utf-16be' | undefined {
+  if (bytes[0] === 0xff && bytes[1] === 0xfe) return 'utf-16le'
+  if (bytes[0] === 0xfe && bytes[1] === 0xff) return 'utf-16be'
+  return undefined
+}
+
+/** Triage, then read the accepted files as text (UTF-8, or UTF-16 with a byte order mark). */
 export async function readIntake(
   entries: readonly IntakeFile[],
   preSkipped: readonly SkippedFile[] = [],
@@ -122,7 +129,9 @@ export async function readIntake(
     if (isCancelled()) break
     try {
       const bytes = new Uint8Array(await entry.read())
-      if (looksBinary(bytes)) skipped.push({ path: entry.path, reason: 'binary' })
+      const utf16 = utf16Encoding(bytes)
+      if (utf16) files.push({ path: entry.path, text: new TextDecoder(utf16).decode(bytes) })
+      else if (looksBinary(bytes)) skipped.push({ path: entry.path, reason: 'binary' })
       else files.push({ path: entry.path, text: decoder.decode(bytes) })
     } catch {
       skipped.push({ path: entry.path, reason: 'unreadable' })
