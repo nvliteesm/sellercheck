@@ -4,7 +4,7 @@
 
 A free, browser-only pre-flight check for Singapore data sellers. Before you sign up or submit, it shows which files are likely to fail required checks for credentials in code and Singapore personal data (NRIC/FIN, phone numbers, emails, addresses), with the file, line, reason and fix.
 
-**Status:** project scaffold. The rule engine, worker and interface are not built yet.
+**Status:** the worker message protocol and the Singapore rule engine are built and unit-tested. The worker scanner and interface are not built yet.
 
 ## Privacy model
 
