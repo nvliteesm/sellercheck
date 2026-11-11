@@ -191,5 +191,9 @@ export const sgPack: RulePack = {
       why: 'Scope kept small for version 1.',
     },
     { label: 'Payment card numbers', why: 'Needs a Luhn check and a test-card skip list.' },
+    {
+      label: 'Unquoted secrets with lower-case names (for example password=... in .ini or .properties files)',
+      why: 'Matching lower-case names would also flag ordinary code assignments.',
+    },
   ],
 }
