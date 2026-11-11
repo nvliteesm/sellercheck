@@ -1,0 +1,7 @@
+[2026-10-02 10:14] Customer: Hi, my order hasn't arrived.
+[2026-10-02 10:15] Agent: Sorry about that. Can I have a contact number?
+[2026-10-02 10:16] Customer: Sure, call me on +65 9876 5432.
+[2026-10-02 10:16] Customer: Or email me at wei.jie.lim@example.com
+[2026-10-02 10:18] Agent: For the customs form I need your passport number.
+[2026-10-02 10:19] Customer: My passport is K1234567X.
+[2026-10-02 10:20] Agent: Thanks, we'll update you within 2 working days.
