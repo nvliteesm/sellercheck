@@ -1,12 +1,12 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CopyReport } from './components/CopyReport'
-import { DropZone } from './components/DropZone'
+import { DropZone, type FileSource } from './components/DropZone'
 import { FindingList } from './components/FindingList'
 import { KnownGaps } from './components/KnownGaps'
 import { NetworkProof } from './components/NetworkProof'
 import { ScanProgress } from './components/ScanProgress'
 import { Verdict } from './components/Verdict'
-import { type IntakeFile, readIntake } from './lib/readFiles'
+import { readIntake } from './lib/readFiles'
 import { NOTICE_TEXT, buildReport } from './lib/report'
 import { sgPack } from './rules'
 import { type ScanHandle, type WorkerLike, createScannerWorker, startScan } from './worker/client'
@@ -33,12 +33,27 @@ export default function App({ createWorker = createScannerWorker }: Props) {
   // Bumped on every new scan and on cancel, so stale async work is ignored.
   const run = useRef(0)
 
-  const onFiles = async (entries: IntakeFile[], preSkipped: SkippedFile[]) => {
+  const noteRef = useRef<HTMLParagraphElement>(null)
+  const idleNote = state.kind === 'idle' ? state.note : undefined
+  // After Cancel or an error, put focus on the message so keyboard users are not left on nothing.
+  useEffect(() => {
+    if (idleNote) noteRef.current?.focus()
+  }, [idleNote])
+
+  const onFiles = async (source: Promise<FileSource>) => {
     const id = ++run.current
     scan.current?.cancel()
     setState({ kind: 'reading' })
 
-    const intake = await readIntake(entries, preSkipped, () => run.current !== id)
+    let listed: FileSource
+    try {
+      listed = await source
+    } catch {
+      if (run.current === id) setState({ kind: 'idle', note: 'The files could not be read. Please try again.' })
+      return
+    }
+    if (run.current !== id) return
+    const intake = await readIntake(listed.entries, listed.skipped, () => run.current !== id)
     if (run.current !== id) return
 
     const findings: Finding[] = []
@@ -102,7 +117,7 @@ export default function App({ createWorker = createScannerWorker }: Props) {
         {!busy && <DropZone onFiles={onFiles} />}
 
         {state.kind === 'idle' && state.note && (
-          <p role="status" className="text-sm text-slate-700">
+          <p ref={noteRef} tabIndex={-1} role="status" className="text-sm text-slate-700 focus:outline-none">
             {state.note}
           </p>
         )}

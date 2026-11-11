@@ -151,6 +151,24 @@ export function fromFileList(list: Iterable<File>): IntakeFile[] {
   }))
 }
 
+/** Files handled between yields to the page while building the list. */
+const LIST_BATCH = 100
+const yieldToPage = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+/**
+ * Like fromFileList, but yields to the page every LIST_BATCH files. Chromium checks each file on
+ * disk the first time its size is read, which froze the page for about a second on 1,000 files.
+ */
+export async function fromFileListAsync(list: Iterable<File>): Promise<IntakeFile[]> {
+  const files = Array.from(list)
+  const out: IntakeFile[] = []
+  for (let i = 0; i < files.length; i += LIST_BATCH) {
+    if (i > 0) await yieldToPage()
+    out.push(...fromFileList(files.slice(i, i + LIST_BATCH)))
+  }
+  return out
+}
+
 export function supportsFolderPicker(): boolean {
   return typeof HTMLInputElement !== 'undefined' && 'webkitdirectory' in HTMLInputElement.prototype
 }
