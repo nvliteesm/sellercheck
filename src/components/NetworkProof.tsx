@@ -1,13 +1,18 @@
 import { useState } from 'react'
 
-/** Fixed test target. The request carries no file content: only the word "test". */
-export const PROOF_URL = 'https://example.com/sellercheck-network-test'
+/**
+ * Fixed test target. The request carries no file content, only the word "test", and the
+ * .invalid domain can never resolve, so even a copy of the page without its security policy
+ * cannot reach a server with it.
+ */
+export const PROOF_URL = 'https://sellercheck-network-test.invalid/'
 
-export type ProofResult = { kind: 'blocked'; detail: string } | { kind: 'sent' }
+export type ProofResult = { kind: 'blocked'; detail: string } | { kind: 'unprotected' }
 
 /**
- * Try to send a request and report whether the browser blocked it. On the deployed site the
- * Content Security Policy (connect-src 'none') blocks it before anything leaves the device.
+ * Try to send a request and report whether the security policy blocked it. On the deployed site
+ * the Content Security Policy (connect-src 'none') blocks it before anything leaves the device.
+ * Only a policy violation counts as blocked; any other failure means the policy is missing.
  */
 export async function tryToSendData(doFetch: typeof fetch = fetch): Promise<ProofResult> {
   let directive = ''
@@ -17,14 +22,15 @@ export async function tryToSendData(doFetch: typeof fetch = fetch): Promise<Proo
   document.addEventListener('securitypolicyviolation', onViolation)
   try {
     await doFetch(PROOF_URL, { method: 'POST', body: 'test', mode: 'no-cors', cache: 'no-store' })
-    return { kind: 'sent' }
   } catch {
+    // Expected either way: blocked by the policy, or the .invalid name not resolving.
+  }
+  try {
     // Let the violation event, which fires asynchronously, arrive.
     await new Promise((r) => setTimeout(r, 50))
-    return {
-      kind: 'blocked',
-      detail: directive ? `Blocked by the security policy (${directive}).` : 'Blocked by the browser.',
-    }
+    return directive
+      ? { kind: 'blocked', detail: `Blocked by the security policy (${directive}).` }
+      : { kind: 'unprotected' }
   } finally {
     document.removeEventListener('securitypolicyviolation', onViolation)
   }
@@ -60,9 +66,9 @@ export function NetworkProof({ send = tryToSendData }: { send?: () => Promise<Pr
         {result && result !== 'pending' && result.kind === 'blocked' && (
           <span className="font-medium text-emerald-800">{result.detail} Nothing was sent.</span>
         )}
-        {result && result !== 'pending' && result.kind === 'sent' && (
+        {result && result !== 'pending' && result.kind === 'unprotected' && (
           <span className="font-medium text-red-800">
-            The request was not blocked. This copy of the page is running without its security policy.
+            The security policy did not block this request, so this copy of the page is running without it.
           </span>
         )}
       </p>

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../src/App'
-import { NetworkProof, tryToSendData } from '../src/components/NetworkProof'
+import { NetworkProof, PROOF_URL, tryToSendData } from '../src/components/NetworkProof'
 import { NOTICE_TEXT } from '../src/lib/report'
 import { sgPack } from '../src/rules'
 import type { WorkerLike } from '../src/worker/client'
@@ -111,9 +111,13 @@ describe('always visible', () => {
 })
 
 describe('"Try to send data"', () => {
-  it('reports a block when the request fails', async () => {
+  it('a failure without a policy violation is not counted as blocked', async () => {
     const r = await tryToSendData(() => Promise.reject(new TypeError('Failed to fetch')))
-    expect(r.kind).toBe('blocked')
+    expect(r).toEqual({ kind: 'unprotected' })
+  })
+
+  it('targets a .invalid address that can never reach a server', () => {
+    expect(new URL(PROOF_URL).hostname.endsWith('.invalid')).toBe(true)
   })
 
   it('reports the directive from the security policy violation', async () => {
@@ -127,7 +131,7 @@ describe('"Try to send data"', () => {
   })
 
   it('warns when the request was not blocked', async () => {
-    expect(await tryToSendData(() => Promise.resolve(new Response()))).toEqual({ kind: 'sent' })
+    expect(await tryToSendData(() => Promise.resolve(new Response()))).toEqual({ kind: 'unprotected' })
   })
 
   it('shows the result next to the button', async () => {
