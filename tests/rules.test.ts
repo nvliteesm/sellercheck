@@ -25,6 +25,7 @@ describe('rule pack shape', () => {
       'service-token': 'blocker',
       'nric-fin': 'blocker',
       'generic-secret': 'review',
+      'env-secret': 'review',
       passport: 'review',
       'sg-phone': 'review',
       email: 'review',
@@ -127,6 +128,44 @@ describe('password or secret in code', () => {
 
   it('does not apply the placeholder skip to known key formats', () => {
     expect(ids("accessKeyId: 'AKIAIOSFODNN7EXAMPLE'")).toEqual(['aws-access-key'])
+  })
+})
+
+describe('password or secret in a .env file (unquoted)', () => {
+  it.each(['PASSWORD=abc12345', 'export API_KEY=q8w7e6r5t4y3', 'DB_PASSWORD = hunter2hunter2  # prod', '  GITHUB_TOKEN_RO=a1b2c3d4e5f6'])(
+    'flags %s as review',
+    (line) => {
+      const r = scan(line)
+      expect(r.findings.map((f) => [f.ruleId, f.severity, f.masked])).toEqual([['env-secret', 'review', maskAll()]])
+    },
+  )
+
+  it('reports the column of the value', () => {
+    expect(scan('PASSWORD=abc12345').findings[0]?.column).toBe('PASSWORD='.length + 1)
+  })
+
+  it.each(['PASSWORD=short', 'password=abc12345', 'const PASSWORD = getPassword()  ;', 'MAX_TOKENS=4096'])(
+    'does not flag %s',
+    (line) => {
+      expect(ids(line)).toEqual([])
+    },
+  )
+
+  it.each(['PASSWORD=changeme123', 'API_KEY=${API_KEY}', 'DB_PASSWORD=$DB_PASS', 'SECRET=your_secret_here'])(
+    'skips placeholder %s',
+    (line) => {
+      const r = scan(line)
+      expect(r.findings).toEqual([])
+      expect(r.skippedMatches.placeholder).toBe(1)
+    },
+  )
+
+  it('a quoted value is counted once, by the quoted rule', () => {
+    expect(ids('PASSWORD="abc12345"')).toEqual(['generic-secret'])
+  })
+
+  it('a known token format stays one blocker', () => {
+    expect(ids('GITHUB_TOKEN=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789')).toEqual(['service-token'])
   })
 })
 
