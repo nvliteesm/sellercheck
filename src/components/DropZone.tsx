@@ -2,7 +2,7 @@ import { type ChangeEvent, type DragEvent, useEffect, useRef, useState } from 'r
 import {
   type IntakeFile,
   fromDataTransfer,
-  fromFileList,
+  fromFileListAsync,
   supportsFolderDrop,
   supportsFolderPicker,
 } from '../lib/readFiles'
@@ -12,9 +12,15 @@ export const FOLDER_DROP_FALLBACK =
   'This browser cannot open dropped folders. Use "Choose folder", or select the files inside it.'
 export const FOLDER_PICKER_FALLBACK = 'This browser cannot pick a whole folder. Use "Choose files" instead.'
 
+export interface FileSource {
+  entries: IntakeFile[]
+  skipped: SkippedFile[]
+}
+
 interface Props {
   disabled?: boolean
-  onFiles: (entries: IntakeFile[], skipped: SkippedFile[]) => void
+  /** Called at once with a pending list, so the page can show "Reading files…" while it loads. */
+  onFiles: (source: Promise<FileSource>) => void
 }
 
 const buttonClass =
@@ -23,7 +29,6 @@ const buttonClass =
 export function DropZone({ disabled = false, onFiles }: Props) {
   const folderInput = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
-  const [dropNote, setDropNote] = useState<string>()
   const canPickFolder = supportsFolderPicker()
   const canDropFolder = supportsFolderDrop()
 
@@ -34,9 +39,9 @@ export function DropZone({ disabled = false, onFiles }: Props) {
 
   const onPick = (e: ChangeEvent<HTMLInputElement>) => {
     const input = e.currentTarget
-    const list = input.files
-    if (list && list.length > 0) onFiles(fromFileList(Array.from(list)), [])
+    const list = input.files ? Array.from(input.files) : []
     input.value = '' // allow choosing the same files again (re-run)
+    if (list.length > 0) onFiles(fromFileListAsync(list).then((entries) => ({ entries, skipped: [] })))
   }
 
   const onDragOver = (e: DragEvent<HTMLElement>) => {
@@ -44,13 +49,13 @@ export function DropZone({ disabled = false, onFiles }: Props) {
     if (!disabled) setDragging(true)
   }
 
-  const onDrop = async (e: DragEvent<HTMLElement>) => {
+  const onDrop = (e: DragEvent<HTMLElement>) => {
     e.preventDefault()
     setDragging(false)
     if (disabled) return
-    const result = await fromDataTransfer(e.dataTransfer)
-    setDropNote(result.usedFallback ? FOLDER_DROP_FALLBACK : undefined)
-    if (result.entries.length > 0 || result.skipped.length > 0) onFiles(result.entries, result.skipped)
+    const hasFiles = Array.from(e.dataTransfer.items ?? []).some((i) => i.kind === 'file') || e.dataTransfer.files.length > 0
+    // fromDataTransfer takes the dropped entries synchronously, before the event ends.
+    if (hasFiles) onFiles(fromDataTransfer(e.dataTransfer))
   }
 
   return (
@@ -80,7 +85,7 @@ export function DropZone({ disabled = false, onFiles }: Props) {
       </div>
 
       {!canPickFolder && <p className="mt-4 text-sm text-amber-900">{FOLDER_PICKER_FALLBACK}</p>}
-      {(!canDropFolder || dropNote) && <p className="mt-4 text-sm text-amber-900">{FOLDER_DROP_FALLBACK}</p>}
+      {!canDropFolder && <p className="mt-4 text-sm text-amber-900">{FOLDER_DROP_FALLBACK}</p>}
     </section>
   )
 }

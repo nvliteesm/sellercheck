@@ -87,11 +87,14 @@ describe('file intake and scan flow', () => {
     render(<App createWorker={() => (worker = new FakeWorker(true))} />)
     pick([asFile('a.txt', 'S8412369B')])
     await waitFor(() => expect(worker?.posted).toHaveLength(1))
-    expect(screen.getByText('Scanning file 1 of 1')).toBeInTheDocument()
+    expect(screen.getAllByText('Scanning file 1 of 1').length).toBeGreaterThan(0)
+    // Focus moved from the vanished drop zone to Cancel.
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus()
 
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     expect(worker!.terminated).toBe(true)
     expect(screen.getByText(CANCELLED_TEXT)).toBeInTheDocument()
+    expect(screen.getByText(CANCELLED_TEXT)).toHaveFocus()
     expect(screen.getByLabelText('Choose files')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /Likely blocked/ })).not.toBeInTheDocument()
   })
