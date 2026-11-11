@@ -1,6 +1,4 @@
-# SellerCheck SG
-
-> **Unofficial, not affiliated with HUD or DataVendor.** An independent concept built only from public pages and docs.
+# SellerCheck 
 
 A free, browser-only pre-flight check for Singapore data sellers. Before you sign up or submit, it shows which files are likely to fail required checks for credentials in code and Singapore personal data (NRIC/FIN, phone numbers, emails, addresses), with the file, line, reason and fix.
 
