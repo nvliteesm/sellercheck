@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+coverage/
+*.tsbuildinfo
+
+# Vercel
+.vercel/
+
+# Environment files (this app has no secrets; keep it that way)
+.env
+.env.*
+
+# Logs and OS / editor files
+npm-debug.log*
+*.log
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
