@@ -7,6 +7,7 @@ import {
   supportsFolderPicker,
 } from '../lib/readFiles'
 import type { SkippedFile } from '../worker/protocol'
+import { secondaryButton } from './ui'
 
 export const FOLDER_DROP_FALLBACK = 'Dropped folders do not work in this browser. Use "Choose folder".'
 export const FOLDER_PICKER_FALLBACK = 'Folders do not work in this browser. Use "Choose files".'
@@ -22,6 +23,8 @@ interface Props {
   compact?: boolean
   /** Called at once with a pending list, so the page can show "Reading files…" while it loads. */
   onFiles: (source: Promise<FileSource>) => void
+  /** Scan the bundled made-up files. The button is hidden when this is not given. */
+  onSample?: () => void
 }
 
 // focus-within, because the focused element is the hidden input inside the label.
@@ -30,7 +33,7 @@ const buttonClass =
 const primaryClass =
   'inline-flex cursor-pointer items-center rounded-md bg-sky-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-800 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-sky-700'
 
-export function DropZone({ disabled = false, compact = false, onFiles }: Props) {
+export function DropZone({ disabled = false, compact = false, onFiles, onSample }: Props) {
   const folderInput = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
   const canPickFolder = supportsFolderPicker()
@@ -75,7 +78,7 @@ export function DropZone({ disabled = false, compact = false, onFiles }: Props) 
       {!compact && (
         <>
           <p className="text-lg font-medium text-slate-900">Drop files or a folder here</p>
-          <p className="mt-1 text-sm text-slate-600">Text files only</p>
+          <p className="mt-1 text-sm text-slate-600">Text files only. No files to hand? Try a sample of made-up data.</p>
         </>
       )}
 
@@ -90,6 +93,11 @@ export function DropZone({ disabled = false, compact = false, onFiles }: Props) 
             <input ref={folderInput} type="file" multiple className="sr-only" disabled={disabled} onChange={onPick} />
             Choose folder
           </label>
+        )}
+        {onSample && !compact && (
+          <button type="button" className={secondaryButton} disabled={disabled} onClick={onSample}>
+            Try a sample
+          </button>
         )}
       </div>
 

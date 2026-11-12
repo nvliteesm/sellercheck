@@ -8,6 +8,7 @@ import { ScanProgress } from './components/ScanProgress'
 import { Verdict } from './components/Verdict'
 import { readIntake } from './lib/readFiles'
 import { NOTICE_TEXT, buildReport } from './lib/report'
+import { sampleSource } from './lib/samples'
 import { sgPack } from './rules'
 import { type ScanHandle, type WorkerLike, createScannerWorker, startScan } from './worker/client'
 import type { DoneMessage, Finding, SkippedFile } from './worker/protocol'
@@ -122,7 +123,7 @@ export default function App({ createWorker = createScannerWorker }: Props) {
           </>
         )}
 
-        {!busy && <DropZone compact={done} onFiles={onFiles} />}
+        {!busy && <DropZone compact={done} onFiles={onFiles} onSample={() => onFiles(Promise.resolve(sampleSource()))} />}
 
         {state.kind === 'idle' && state.note && (
           <p ref={noteRef} tabIndex={-1} role="status" className="text-sm text-slate-700 focus:outline-none">
