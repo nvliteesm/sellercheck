@@ -1,4 +1,4 @@
-# SellerCheck SG: a pre-flight check for DataVendor sellers
+# SellerCheck: a pre-flight check for DataVendor sellers
 
 Brief for HUD · Steven Lim · November 2026
 
@@ -28,7 +28,7 @@ Brief for HUD · Steven Lim · November 2026
 
 - **Patterns not covered:** M-series FIN, personal names, JSON Web Tokens, cloud keys other than AWS, card numbers, and lower-case unquoted secrets in `.ini` or `.properties` files.
 - **Files not scanned:** binaries, PDFs and images, files over 1.5 MB, files beyond the first 3,000, and dependency or build folders. Singapore rules only.
-- **Policy basis (to be verified by Steven):** PDPC guidance that organisations are generally not allowed to collect, use or disclose NRIC numbers. A clean result is not permission to sell data.
+- **Policy basis (to be verified by Steven):** PDPC's NRIC advisory guidelines (¶2.1, ¶3.1): organisations are generally not allowed to collect, use or disclose NRIC numbers (or copies), except where required by law or necessary to accurately verify identity to a high degree of fidelity. A clean result is not permission to sell data.
 
 **Questions for HUD.**
 

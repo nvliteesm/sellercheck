@@ -12,7 +12,7 @@ import { sgPack } from './rules'
 import { type ScanHandle, type WorkerLike, createScannerWorker, startScan } from './worker/client'
 import type { DoneMessage, Finding, SkippedFile } from './worker/protocol'
 
-export const APP_TITLE = 'SellerCheck SG'
+export const APP_TITLE = 'SellerCheck'
 export const UNOFFICIAL_LABEL = 'Unofficial tool'
 export const CANCELLED_TEXT = 'Scan cancelled.'
 

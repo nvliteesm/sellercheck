@@ -105,7 +105,7 @@ export const sgPack: RulePack = {
       validate: isValidNric,
       mask: (v) => maskMiddle(v, 0, 4),
       reason:
-        'This is a valid NRIC or FIN. PDPC guidance says organisations are generally not allowed to collect, use or disclose national ID numbers.',
+        'This is a valid NRIC or FIN. PDPC guidance says organisations are generally not allowed to collect, use or disclose NRIC numbers (or copies), except where required by law or necessary to accurately verify identity to a high degree of fidelity.',
       fix: 'Remove the column or replace each value with a random or hashed ID.',
     },
 

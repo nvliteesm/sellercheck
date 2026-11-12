@@ -1,4 +1,4 @@
-// DUMMY FIXTURE for SellerCheck SG tests. Every value below is invented.
+// DUMMY FIXTURE for SellerCheck tests. Every value below is invented.
 // None of these keys or passwords are real or have ever been issued.
 // Expected: 2 blockers (cloud access key, payment token), 1 review (hard-coded password).
 
