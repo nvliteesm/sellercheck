@@ -73,7 +73,7 @@ export function buildReport(
   knownGaps: readonly KnownGap[],
 ): string {
   const out: string[] = []
-  out.push('SellerCheck SG report (unofficial tool)')
+  out.push('SellerCheck report (unofficial tool)')
   out.push('')
   out.push(`Verdict: ${VERDICT_TEXT[result.verdict]} (${countsText(result.scanned, result.skipped)})`)
   out.push(`${result.totals.blocker} likely to block, ${result.totals.review} to review`)

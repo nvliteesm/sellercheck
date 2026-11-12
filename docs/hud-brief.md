@@ -1,4 +1,4 @@
-# SellerCheck SG: a pre-flight check for DataVendor sellers
+# SellerCheck: a pre-flight check for DataVendor sellers
 
 Brief for HUD · Steven Lim · November 2026
 

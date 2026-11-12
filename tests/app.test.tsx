@@ -5,7 +5,7 @@ import App from '../src/App'
 describe('App scaffold', () => {
   it('shows the title and the unofficial label', () => {
     render(<App />)
-    expect(screen.getByRole('heading', { level: 1, name: 'SellerCheck SG' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'SellerCheck' })).toBeInTheDocument()
     expect(screen.getByText('Unofficial tool')).toBeInTheDocument()
   })
 

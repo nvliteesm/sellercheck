@@ -1,5 +1,5 @@
 {
-  "name": "sellercheck-sg",
+  "name": "sellercheck",
   "private": true,
   "version": "0.1.0",
   "description": "Unofficial browser-only pre-flight check for Singapore data sellers. Nothing leaves your device.",
