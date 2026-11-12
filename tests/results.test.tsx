@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../src/App'
+import { SHOWN_ROWS } from '../src/components/FindingList'
 import { NetworkProof, PROOF_URL, tryToSendData } from '../src/components/NetworkProof'
 import { NOTICE_TEXT } from '../src/lib/report'
 import { sgPack } from '../src/rules'
@@ -62,26 +63,42 @@ describe('results view', () => {
     expect(files).toEqual(['dummy-config.js', 'dummy-customers.csv'])
 
     const config = within(panel.getByRole('article', { name: 'dummy-config.js' }))
-    const items = config.getAllByRole('listitem')
-    expect(items).toHaveLength(2)
-    const first = within(items[0]!)
-    expect(first.getByText('Line 8')).toBeInTheDocument()
-    expect(first.getByText('Cloud access key')).toBeInTheDocument()
-    expect(first.getByText('AKIA••••••••••••••LE')).toBeInTheDocument()
-    expect(first.getByText(/known credential format/)).toBeInTheDocument()
-    expect(first.getByText(/deactivate the key/)).toBeInTheDocument()
+    const key = within(config.getByRole('list', { name: 'Cloud access key found' }))
+    const row = within(key.getByRole('listitem'))
+    expect(row.getByText('Line 8')).toBeInTheDocument()
+    expect(row.getByText('AKIA••••••••••••••LE')).toBeInTheDocument()
+    expect(config.getByText('Service token')).toBeInTheDocument()
+    expect(config.getAllByText(/known credential format/)).toHaveLength(2)
+    expect(config.getByText(/deactivate the key/)).toBeInTheDocument()
   })
 
-  it('merges repeated findings of one rule in a file into one row', async () => {
+  it('shows each finding on its own line under one category, with one fix', async () => {
     await scanDummies()
     const csv = within(screen.getByRole('article', { name: 'dummy-customers.csv' }))
-    const rows = csv.getAllByRole('listitem')
-    expect(rows).toHaveLength(1)
-    const nric = within(rows[0]!)
-    expect(nric.getByText('NRIC or FIN')).toBeInTheDocument()
-    expect(nric.getByText('×3')).toBeInTheDocument()
-    expect(nric.getByText('Lines 2, 3, 4')).toBeInTheDocument()
-    expect(nric.getByText(/random or hashed ID/)).toBeInTheDocument()
+    expect(csv.getByText('NRIC or FIN')).toBeInTheDocument()
+    expect(csv.getByText('×3')).toBeInTheDocument()
+    const rows = within(csv.getByRole('list', { name: 'NRIC or FIN found' })).getAllByRole('listitem')
+    expect(rows.map((r) => r.textContent)).toEqual(['Line 2•••••369B', 'Line 3•••••542B', 'Line 4•••••817R'])
+    expect(csv.getAllByText(/random or hashed ID/)).toHaveLength(1)
+    expect(csv.queryByRole('button', { name: /Show all/ })).not.toBeInTheDocument()
+  })
+
+  it('shows the first SHOWN_ROWS lines of a category, then "Show all"', async () => {
+    render(<App createWorker={() => new FakeWorker()} />)
+    const phones = ['9123 4567', '9123 4568', '9123 4569', '9123 4570', '9123 4571']
+    pick([new File([phones.map((p) => `call ${p}`).join('\n')], 'chat.txt')])
+    await screen.findByRole('heading', { name: 'Needs review' })
+    const list = screen.getByRole('list', { name: 'Singapore phone number found' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(SHOWN_ROWS)
+    const more = screen.getByRole('button', { name: 'Show all 5' })
+    expect(more).toHaveAttribute('aria-expanded', 'false')
+    expect(more).toHaveAttribute('aria-controls', list.id)
+    fireEvent.click(more)
+    expect(within(list).getAllByRole('listitem').map((r) => r.textContent?.slice(0, 6))).toEqual([
+      'Line 1', 'Line 2', 'Line 3', 'Line 4', 'Line 5',
+    ])
+    fireEvent.click(screen.getByRole('button', { name: 'Show fewer' }))
+    expect(within(list).getAllByRole('listitem')).toHaveLength(SHOWN_ROWS)
   })
 
   it('switches tabs by click and by arrow keys', async () => {
