@@ -1,0 +1,13 @@
+# FAKE config for SellerCheck demo. Every value is invented.
+shop:
+  name: "Kopi Corner Online"
+  store_address: "1 Raffles Place, #20-01, Singapore 048616"
+  phone: "6345 6789"
+  owner_email: "ops.lead@example.com"
+  public_email: "support@example.com"
+mail:
+  smtp_host: "smtp.example.com"
+  smtp_user: "kopicorner"
+  smtp_password: "Teh-Peng-Kosong-88"
+cache:
+  ttl_seconds: 300

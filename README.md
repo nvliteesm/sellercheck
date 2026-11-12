@@ -55,7 +55,7 @@ vercel.json     CSP and security headers
 Measured in headless Chromium against the production build (`npm run build && npm run preview`). Firefox and Safari have not been tested.
 
 - **axe-core 4.14** (WCAG 2.0 to 2.2 A/AA): 0 violations before a scan, on a result, and after the network check. `tests/a11y.test.tsx` repeats this in jsdom, without the contrast rule.
-- **Keyboard only:** Tab reaches Choose files, Choose folder, Copy report, "What this check does not cover" and Try to send data, each with a visible focus ring. Space opens the file chooser. Focus moves to Cancel when a scan starts, then to the verdict heading, or to the note after Cancel.
+- **Keyboard only:** Tab reaches Choose files, Choose folder, Try a sample, Copy report, "What this check does not cover" and Try to send data, each with a visible focus ring. Space opens the file chooser. Focus moves to Cancel when a scan starts, then to the verdict heading, or to the note after Cancel.
 - **Screen readers:** scan progress is announced at most every 2 seconds, not once per file.
 - **Reduced motion and reflow:** animations are cut to near zero under `prefers-reduced-motion`. There is no horizontal scroll at 320 px.
 - **1,000 files / 24 MB folder** (4-CPU machine): verdict in 4.1 s at normal speed and 7.8 to 8.9 s with 4x CPU slowdown, against a 10 s target. The longest main-thread task in app code was about 150 ms at normal speed.

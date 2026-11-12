@@ -10,6 +10,7 @@
   - `dummy-README.md`
 
   They hold only invented people and fake keys.
+- **No files to hand?** Click **Try a sample** instead. It scans five made-up files built into the app (nothing is uploaded or fetched). Expect **Likely blocked**, "5 scanned · 0 skipped", "6 likely to block · 20 to review". The times below still apply, but the counts and file names differ.
 
 ## Script
 
