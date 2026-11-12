@@ -1,10 +1,10 @@
-import { type KeyboardEvent, useRef, useState } from 'react'
-import { SEVERITY_TEXT, groupByFile, groupByRule } from '../lib/report'
+import { type KeyboardEvent, useId, useRef, useState } from 'react'
+import { type RuleGroup, SEVERITY_TEXT, groupByFile, groupByRule } from '../lib/report'
 import type { Finding, Severity } from '../worker/protocol'
 import { focusRing, summaryClass } from './ui'
 
-/** Long lists (a CSV with hundreds of rows) show the first few examples only. */
-export const MAX_EXAMPLES = 5
+/** Rows shown per category before "Show all". */
+export const SHOWN_ROWS = 3
 
 const TABS: readonly Severity[] = ['blocker', 'review']
 
@@ -15,11 +15,47 @@ const TAB_TONE = {
 
 const EMPTY_TEXT = { blocker: 'Nothing likely to block.', review: 'Nothing to review.' } as const
 
-function linesText(findings: readonly Finding[]): string {
-  const lines = [...new Set(findings.map((f) => f.line))]
-  const shown = lines.slice(0, MAX_EXAMPLES).join(', ')
-  const more = lines.length > MAX_EXAMPLES ? ` and ${lines.length - MAX_EXAMPLES} more` : ''
-  return `${lines.length === 1 ? 'Line' : 'Lines'} ${shown}${more}`
+function RuleGroupRows({ group }: { group: RuleGroup }) {
+  const [expanded, setExpanded] = useState(false)
+  const listId = useId()
+  const rows = expanded ? group.findings : group.findings.slice(0, SHOWN_ROWS)
+  const hidden = group.findings.length - SHOWN_ROWS
+
+  return (
+    <li className="space-y-2 px-4 py-3 text-sm">
+      <div className="flex flex-wrap items-baseline gap-x-2">
+        <span className="text-base font-medium">{group.label}</span>
+        {group.findings.length > 1 && <span className="text-slate-700">×{group.findings.length}</span>}
+      </div>
+      <ul id={listId} aria-label={`${group.label} found`} className="divide-y divide-slate-100 rounded-md border border-slate-200">
+        {rows.map((f) => (
+          <li key={`${f.line}:${f.column}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5">
+            <span className="w-16 shrink-0 text-xs font-medium text-slate-700">Line {f.line}</span>
+            <code className="break-all rounded bg-slate-100 px-1.5 py-0.5 text-xs">{f.masked}</code>
+          </li>
+        ))}
+      </ul>
+      {hidden > 0 && (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          aria-controls={listId}
+          onClick={() => setExpanded((v) => !v)}
+          className={`rounded text-sm font-medium text-sky-800 underline-offset-2 hover:underline ${focusRing}`}
+        >
+          {expanded ? 'Show fewer' : `Show all ${group.findings.length}`}
+        </button>
+      )}
+      <p className="text-slate-900">
+        <span className="font-medium">Fix: </span>
+        {group.fix}
+      </p>
+      <details>
+        <summary className={`${summaryClass} text-xs`}>Why?</summary>
+        <p className="mt-1 text-slate-700">{group.reason}</p>
+      </details>
+    </li>
+  )
 }
 
 function FileGroups({ findings, severity }: { findings: readonly Finding[]; severity: Severity }) {
@@ -31,28 +67,7 @@ function FileGroups({ findings, severity }: { findings: readonly Finding[]; seve
           <h3 className="break-all border-b border-slate-200 px-4 py-3 font-mono text-sm font-semibold">{file.path}</h3>
           <ul className="divide-y divide-slate-100">
             {groupByRule(file.findings).map((g) => (
-              <li key={`${g.ruleId}:${g.findings[0]!.line}`} className="space-y-1.5 px-4 py-3 text-sm">
-                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                  <span className="text-base font-medium">{g.label}</span>
-                  {g.findings.length > 1 && <span className="text-slate-700">×{g.findings.length}</span>}
-                  <span className="text-xs text-slate-600">{linesText(g.findings)}</span>
-                </div>
-                <p className="flex flex-wrap gap-1.5">
-                  {g.findings.slice(0, MAX_EXAMPLES).map((f) => (
-                    <code key={`${f.line}:${f.column}`} className="break-all rounded bg-slate-100 px-1.5 py-0.5 text-xs">
-                      {f.masked}
-                    </code>
-                  ))}
-                </p>
-                <p className="text-slate-900">
-                  <span className="font-medium">Fix: </span>
-                  {g.fix}
-                </p>
-                <details>
-                  <summary className={`${summaryClass} text-xs`}>Why?</summary>
-                  <p className="mt-1 text-slate-700">{g.reason}</p>
-                </details>
-              </li>
+              <RuleGroupRows key={`${g.ruleId}:${g.findings[0]!.line}`} group={g} />
             ))}
           </ul>
         </article>
