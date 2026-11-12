@@ -1,7 +1,6 @@
 import { useState } from 'react'
+import { secondaryButton as button } from './ui'
 
-const button =
-  'rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700'
 
 /** Copies the plain-text report. Where the clipboard is unavailable, shows it to select by hand. */
 export function CopyReport({ text }: { text: string }) {
@@ -21,16 +20,16 @@ export function CopyReport({ text }: { text: string }) {
       <button type="button" onClick={copy} className={button}>
         Copy report
       </button>
-      <span role="status" className="ml-3 text-sm text-slate-700">
+      <span role="status" className="ml-3 text-sm">
         {status === 'copied' && 'Report copied.'}
-        {status === 'manual' && 'Copying is blocked here. Select the text below and copy it.'}
+        {status === 'manual' && 'Copy blocked. Select the text below instead.'}
       </span>
       {status === 'manual' && (
         <textarea
           readOnly
           aria-label="Report text"
           value={text}
-          className="mt-3 h-64 w-full rounded-md border border-slate-300 p-2 font-mono text-xs"
+          className="mt-3 h-64 w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs text-slate-900"
           onFocus={(e) => e.currentTarget.select()}
         />
       )}

@@ -62,6 +62,7 @@ describe('buildReport (FR8)', () => {
     expect(text).toContain('  - logo.png')
     expect(text).toContain('M-series FIN')
     expect(text).toContain(NOTICE_TEXT)
+    expect(text).not.toMatch(/HUD|DataVendor/)
   })
 
   it('holds no raw secret or personal data', () => {

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { secondaryButton, summaryClass } from './ui'
 
 /**
  * Fixed test target. The request carries no file content, only the word "test", and the
@@ -45,33 +46,25 @@ export function NetworkProof({ send = tryToSendData }: { send?: () => Promise<Pr
   }
 
   return (
-    <section aria-labelledby="proof-heading" className="rounded-lg border border-slate-200 bg-white p-4 text-sm">
-      <h2 id="proof-heading" className="font-medium">
-        Check that nothing can leave this page
-      </h2>
-      <p className="mt-1 text-slate-700">
-        This button tries to send the word "test" to another website. The page's security policy should stop it.
-        You can also watch the Network tab in your browser's developer tools.
-      </p>
-      <button
-        type="button"
-        onClick={run}
-        disabled={result === 'pending'}
-        className="mt-3 rounded-md border border-slate-300 bg-white px-4 py-2 font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
-      >
-        Try to send data
-      </button>
-      <p role="status" className="mt-2">
-        {result === 'pending' && 'Trying…'}
-        {result && result !== 'pending' && result.kind === 'blocked' && (
-          <span className="font-medium text-emerald-800">{result.detail} Nothing was sent.</span>
-        )}
-        {result && result !== 'pending' && result.kind === 'unprotected' && (
-          <span className="font-medium text-red-800">
-            The security policy did not block this request, so this copy of the page is running without it.
-          </span>
-        )}
-      </p>
-    </section>
+    <details className="text-sm">
+      <summary className={summaryClass}>Prove nothing leaves this page</summary>
+      <div className="mt-2 space-y-2">
+        <p className="text-slate-700">This tries to send the word "test" to another website. It should be blocked.</p>
+        <button type="button" onClick={run} disabled={result === 'pending'} className={secondaryButton}>
+          Try to send data
+        </button>
+        <p role="status">
+          {result === 'pending' && 'Trying…'}
+          {result && result !== 'pending' && result.kind === 'blocked' && (
+            <span className="font-medium text-emerald-800">{result.detail} Nothing was sent.</span>
+          )}
+          {result && result !== 'pending' && result.kind === 'unprotected' && (
+            <span className="font-medium text-red-800">
+              Not blocked. This copy of the page is running without its security policy.
+            </span>
+          )}
+        </p>
+      </div>
+    </details>
   )
 }

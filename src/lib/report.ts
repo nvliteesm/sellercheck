@@ -12,8 +12,7 @@ import {
 import { SKIP_REASON_TEXT } from './readFiles'
 
 export const NOTICE_TEXT =
-  'Advice only. A clean result is not permission to sell data and is not legal advice. ' +
-  'It covers only the files that were scanned and the patterns listed under "What this check does not cover".'
+  'Advice only, not legal advice. Results cover only the scanned files and are not permission to sell data.'
 
 export const SEVERITY_TEXT = { blocker: 'Likely to block', review: 'Review' } as const
 
@@ -40,6 +39,33 @@ export function groupByFile(findings: readonly Finding[]): FileGroup[] {
     .sort((a, b) => Number(b.blockers > 0) - Number(a.blockers > 0) || (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
 }
 
+export interface RuleGroup {
+  readonly ruleId: string
+  readonly severity: Finding['severity']
+  readonly label: string
+  readonly reason: string
+  readonly fix: string
+  readonly findings: readonly Finding[]
+}
+
+/** One file's findings merged by rule, so ten phone numbers show as one row. Blockers first. */
+export function groupByRule(findings: readonly Finding[]): RuleGroup[] {
+  const byRule = new Map<string, Finding[]>()
+  for (const f of findings) {
+    // Rules can word a finding per match, so merge only identical wording.
+    const key = [f.ruleId, f.label, f.reason, f.fix].join('\n')
+    const list = byRule.get(key)
+    if (list) list.push(f)
+    else byRule.set(key, [f])
+  }
+  return [...byRule.values()]
+    .map((list) => {
+      const first = list[0]!
+      return { ruleId: first.ruleId, severity: first.severity, label: first.label, reason: first.reason, fix: first.fix, findings: list }
+    })
+    .sort((a, b) => Number(b.severity === 'blocker') - Number(a.severity === 'blocker'))
+}
+
 export function buildReport(
   result: DoneMessage,
   findings: readonly Finding[],
@@ -47,7 +73,7 @@ export function buildReport(
   knownGaps: readonly KnownGap[],
 ): string {
   const out: string[] = []
-  out.push('SellerCheck SG pre-flight report (unofficial, not affiliated with HUD or DataVendor)')
+  out.push('SellerCheck SG report (unofficial tool)')
   out.push('')
   out.push(`Verdict: ${VERDICT_TEXT[result.verdict]} (${countsText(result.scanned, result.skipped)})`)
   out.push(`${result.totals.blocker} likely to block, ${result.totals.review} to review`)

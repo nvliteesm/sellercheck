@@ -8,9 +8,8 @@ import {
 } from '../lib/readFiles'
 import type { SkippedFile } from '../worker/protocol'
 
-export const FOLDER_DROP_FALLBACK =
-  'This browser cannot open dropped folders. Use "Choose folder", or select the files inside it.'
-export const FOLDER_PICKER_FALLBACK = 'This browser cannot pick a whole folder. Use "Choose files" instead.'
+export const FOLDER_DROP_FALLBACK = 'Dropped folders do not work in this browser. Use "Choose folder".'
+export const FOLDER_PICKER_FALLBACK = 'Folders do not work in this browser. Use "Choose files".'
 
 export interface FileSource {
   entries: IntakeFile[]
@@ -19,14 +18,19 @@ export interface FileSource {
 
 interface Props {
   disabled?: boolean
+  /** One slim row, used under a result to check other files. */
+  compact?: boolean
   /** Called at once with a pending list, so the page can show "Reading files…" while it loads. */
   onFiles: (source: Promise<FileSource>) => void
 }
 
+// focus-within, because the focused element is the hidden input inside the label.
 const buttonClass =
   'inline-flex cursor-pointer items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 shadow-sm hover:bg-slate-100 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-sky-700'
+const primaryClass =
+  'inline-flex cursor-pointer items-center rounded-md bg-sky-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-sky-800 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-sky-700'
 
-export function DropZone({ disabled = false, onFiles }: Props) {
+export function DropZone({ disabled = false, compact = false, onFiles }: Props) {
   const folderInput = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
   const canPickFolder = supportsFolderPicker()
@@ -64,15 +68,20 @@ export function DropZone({ disabled = false, onFiles }: Props) {
       onDragOver={onDragOver}
       onDragLeave={() => setDragging(false)}
       onDrop={onDrop}
-      className={`rounded-lg border-2 border-dashed p-8 text-center ${
+      className={`rounded-xl border-2 border-dashed text-center ${compact ? 'px-4 py-3' : 'px-6 py-10'} ${
         dragging ? 'border-sky-600 bg-sky-50' : 'border-slate-300 bg-white'
       }`}
     >
-      <p className="text-base font-medium text-slate-900">Drop files or a folder here</p>
-      <p className="mt-1 text-sm text-slate-600">Text files only. Nothing leaves your device.</p>
+      {!compact && (
+        <>
+          <p className="text-lg font-medium text-slate-900">Drop files or a folder here</p>
+          <p className="mt-1 text-sm text-slate-600">Text files only</p>
+        </>
+      )}
 
-      <div className="mt-5 flex flex-wrap justify-center gap-3">
-        <label className={buttonClass}>
+      <div className={`flex flex-wrap items-center justify-center gap-3 ${compact ? '' : 'mt-5'}`}>
+        {compact && <span className="text-sm text-slate-700">Check other files:</span>}
+        <label className={compact ? buttonClass : primaryClass}>
           <input type="file" multiple className="sr-only" disabled={disabled} onChange={onPick} />
           Choose files
         </label>

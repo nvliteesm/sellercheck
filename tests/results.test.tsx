@@ -68,6 +68,18 @@ describe('results view', () => {
     expect(first.getByText(/deactivate the key/)).toBeInTheDocument()
   })
 
+  it('merges repeated findings of one rule in a file into one row', async () => {
+    await scanDummies()
+    const csv = within(screen.getByRole('article', { name: 'dummy-customers.csv' }))
+    const rows = csv.getAllByRole('listitem')
+    expect(rows).toHaveLength(4)
+    const nric = within(rows[0]!)
+    expect(nric.getByText('NRIC or FIN')).toBeInTheDocument()
+    expect(nric.getByText('×3')).toBeInTheDocument()
+    expect(nric.getByText('Lines 2, 3, 4')).toBeInTheDocument()
+    expect(nric.getByText(/random or hashed ID/)).toBeInTheDocument()
+  })
+
   it('never renders a raw secret or NRIC', async () => {
     await scanDummies()
     const html = document.body.innerHTML
@@ -104,7 +116,8 @@ describe('always visible', () => {
     expect(await screen.findByRole('heading', { name: 'No issues found in scanned files' })).toBeInTheDocument()
     expect(screen.getByText('1 scanned · 0 skipped')).toBeInTheDocument()
     expect(screen.getByText(NOTICE_TEXT)).toBeInTheDocument()
-    expect(screen.getByText('Unofficial, not affiliated with HUD or DataVendor')).toBeInTheDocument()
+    expect(screen.getByText('Unofficial tool')).toBeInTheDocument()
+    expect(document.body.textContent).not.toMatch(/HUD|DataVendor/)
     expect(screen.getByText('What this check does not cover')).toBeInTheDocument()
     for (const gap of sgPack.knownGaps) expect(screen.getByText(`${gap.label}.`)).toBeInTheDocument()
   })
