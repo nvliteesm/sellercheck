@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { secondaryButton } from './ui'
 
 interface Props {
   /** null while files are still being read, before the worker starts. */
@@ -49,7 +50,7 @@ export function ScanProgress({ done, total, path, onCancel }: Props) {
         ref={cancel}
         type="button"
         onClick={onCancel}
-        className="mt-4 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700"
+        className={`mt-4 ${secondaryButton}`}
       >
         Cancel
       </button>

@@ -13,8 +13,8 @@ import { type ScanHandle, type WorkerLike, createScannerWorker, startScan } from
 import type { DoneMessage, Finding, SkippedFile } from './worker/protocol'
 
 export const APP_TITLE = 'SellerCheck SG'
-export const UNOFFICIAL_LABEL = 'Unofficial, not affiliated with HUD or DataVendor'
-export const CANCELLED_TEXT = 'Scan cancelled. No results were kept.'
+export const UNOFFICIAL_LABEL = 'Unofficial tool'
+export const CANCELLED_TEXT = 'Scan cancelled.'
 
 type State =
   | { kind: 'idle'; note?: string }
@@ -49,7 +49,7 @@ export default function App({ createWorker = createScannerWorker }: Props) {
     try {
       listed = await source
     } catch {
-      if (run.current === id) setState({ kind: 'idle', note: 'The files could not be read. Please try again.' })
+      if (run.current === id) setState({ kind: 'idle', note: 'Could not read the files. Please try again.' })
       return
     }
     if (run.current !== id) return
@@ -90,31 +90,39 @@ export default function App({ createWorker = createScannerWorker }: Props) {
   }
 
   const busy = state.kind === 'reading' || state.kind === 'scanning'
-  // Shown on every state (FR9); directly under the verdict when there is a result.
-  const notice = (
-    <p role="note" className="rounded-lg border border-slate-300 bg-slate-100 p-4 text-sm text-slate-800">
-      {NOTICE_TEXT}
-    </p>
-  )
+  const done = state.kind === 'done'
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4">
           <h1 className="text-xl font-semibold tracking-tight">{APP_TITLE}</h1>
-          <p className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-medium text-amber-900">
+          <p className="rounded-full border border-slate-300 px-3 py-0.5 text-xs font-medium text-slate-700">
             {UNOFFICIAL_LABEL}
           </p>
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl space-y-6 px-4 py-10">
-        <p className="max-w-prose text-base leading-relaxed text-slate-700">
-          A free check that runs entirely in your browser and shows which files are likely to fail
-          required checks for credentials and Singapore personal data. Nothing is uploaded.
-        </p>
+      <main className="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:py-12">
+        {!done && (
+          <div className="space-y-2">
+            <p className="text-2xl font-semibold tracking-tight sm:text-3xl">Check your files before you sell data</p>
+            <p className="text-base text-slate-700">
+              Finds passwords, keys and Singapore personal data. Nothing leaves your device.
+            </p>
+          </div>
+        )}
 
-        {!busy && <DropZone onFiles={onFiles} />}
+        {state.kind === 'done' && (
+          <>
+            <Verdict result={state.result} skipped={state.skipped}>
+              <CopyReport text={buildReport(state.result, state.findings, state.skipped, sgPack.knownGaps)} />
+            </Verdict>
+            <FindingList findings={state.findings} />
+          </>
+        )}
+
+        {!busy && <DropZone compact={done} onFiles={onFiles} />}
 
         {state.kind === 'idle' && state.note && (
           <p ref={noteRef} tabIndex={-1} role="status" className="text-sm text-slate-700 focus:outline-none">
@@ -127,23 +135,15 @@ export default function App({ createWorker = createScannerWorker }: Props) {
           <ScanProgress done={state.done} total={state.total} path={state.path} onCancel={onCancel} />
         )}
 
-        {state.kind === 'done' && (
-          <>
-            <Verdict result={state.result} skipped={state.skipped} />
-            {notice}
-            <CopyReport text={buildReport(state.result, state.findings, state.skipped, sgPack.knownGaps)} />
-            <FindingList findings={state.findings} />
-          </>
-        )}
-
-        {state.kind !== 'done' && notice}
-        <KnownGaps gaps={sgPack.knownGaps} />
-        <NetworkProof />
+        {/* Always on the page (FR9): the limits of a result, with the details one click away. */}
+        <footer className="space-y-3 border-t border-slate-200 pt-5">
+          <p role="note" className="text-sm text-slate-700">
+            {NOTICE_TEXT}
+          </p>
+          <KnownGaps gaps={sgPack.knownGaps} />
+          <NetworkProof />
+        </footer>
       </main>
-
-      <footer className="mx-auto max-w-4xl px-4 pb-10 text-sm text-slate-600">
-        <p>Unofficial concept built only from public pages and docs. Not a HUD or DataVendor product.</p>
-      </footer>
     </div>
   )
 }

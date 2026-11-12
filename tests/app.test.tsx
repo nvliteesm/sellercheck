@@ -6,11 +6,16 @@ describe('App scaffold', () => {
   it('shows the title and the unofficial label', () => {
     render(<App />)
     expect(screen.getByRole('heading', { level: 1, name: 'SellerCheck SG' })).toBeInTheDocument()
-    expect(screen.getByText('Unofficial, not affiliated with HUD or DataVendor')).toBeInTheDocument()
+    expect(screen.getByText('Unofficial tool')).toBeInTheDocument()
+  })
+
+  it('names no outside company in the page text', () => {
+    render(<App />)
+    expect(document.body.textContent).not.toMatch(/HUD|DataVendor/)
   })
 
   it('says a clean result is not permission to sell or legal advice', () => {
     render(<App />)
-    expect(screen.getByText(/not permission to sell data and is not legal advice/i)).toBeInTheDocument()
+    expect(screen.getByText(/not legal advice.*not permission to sell data/i)).toBeInTheDocument()
   })
 })
