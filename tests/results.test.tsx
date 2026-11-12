@@ -51,17 +51,21 @@ describe('results view', () => {
     expect(screen.getByText('4 scanned · 0 skipped')).toBeInTheDocument()
   })
 
-  it('groups findings by file, blockers first, each with all seven FR5 fields', async () => {
+  it('opens on the "Likely to block" tab, grouped by file, with label, lines, masked value and fix', async () => {
     await scanDummies()
-    const files = screen.getAllByRole('article').map((a) => a.getAttribute('aria-label'))
-    expect(files).toEqual(['dummy-config.js', 'dummy-customers.csv', 'dummy-support-chat.txt'])
+    const blockTab = screen.getByRole('tab', { name: 'Likely to block 5' })
+    expect(blockTab).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Review 13' })).toHaveAttribute('aria-selected', 'false')
 
-    const config = within(screen.getByRole('article', { name: 'dummy-config.js' }))
+    const panel = within(screen.getByRole('tabpanel'))
+    const files = panel.getAllByRole('article').map((a) => a.getAttribute('aria-label'))
+    expect(files).toEqual(['dummy-config.js', 'dummy-customers.csv'])
+
+    const config = within(panel.getByRole('article', { name: 'dummy-config.js' }))
     const items = config.getAllByRole('listitem')
-    expect(items).toHaveLength(3)
+    expect(items).toHaveLength(2)
     const first = within(items[0]!)
     expect(first.getByText('Line 8')).toBeInTheDocument()
-    expect(first.getByText('Likely to block')).toBeInTheDocument()
     expect(first.getByText('Cloud access key')).toBeInTheDocument()
     expect(first.getByText('AKIA••••••••••••••LE')).toBeInTheDocument()
     expect(first.getByText(/known credential format/)).toBeInTheDocument()
@@ -72,12 +76,45 @@ describe('results view', () => {
     await scanDummies()
     const csv = within(screen.getByRole('article', { name: 'dummy-customers.csv' }))
     const rows = csv.getAllByRole('listitem')
-    expect(rows).toHaveLength(4)
+    expect(rows).toHaveLength(1)
     const nric = within(rows[0]!)
     expect(nric.getByText('NRIC or FIN')).toBeInTheDocument()
     expect(nric.getByText('×3')).toBeInTheDocument()
     expect(nric.getByText('Lines 2, 3, 4')).toBeInTheDocument()
     expect(nric.getByText(/random or hashed ID/)).toBeInTheDocument()
+  })
+
+  it('switches tabs by click and by arrow keys', async () => {
+    await scanDummies()
+    const blockTab = screen.getByRole('tab', { name: 'Likely to block 5' })
+    const reviewTab = screen.getByRole('tab', { name: 'Review 13' })
+    fireEvent.click(reviewTab)
+    expect(reviewTab).toHaveAttribute('aria-selected', 'true')
+    expect(reviewTab).toHaveFocus()
+    const panel = within(screen.getByRole('tabpanel'))
+    expect(panel.getAllByRole('article').map((a) => a.getAttribute('aria-label'))).toEqual([
+      'dummy-config.js',
+      'dummy-customers.csv',
+      'dummy-support-chat.txt',
+    ])
+    expect(panel.queryByText('NRIC or FIN')).not.toBeInTheDocument()
+
+    fireEvent.keyDown(reviewTab, { key: 'ArrowRight' })
+    expect(blockTab).toHaveAttribute('aria-selected', 'true')
+    expect(blockTab).toHaveFocus()
+    expect(blockTab).toHaveAttribute('tabindex', '0')
+    expect(reviewTab).toHaveAttribute('tabindex', '-1')
+    fireEvent.keyDown(blockTab, { key: 'End' })
+    expect(reviewTab).toHaveFocus()
+  })
+
+  it('opens on Review when nothing is likely to block', async () => {
+    render(<App createWorker={() => new FakeWorker()} />)
+    pick([new File(['call 9123 4567'], 'a.txt')])
+    expect(await screen.findByRole('heading', { name: 'Needs review' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Review 1' })).toHaveAttribute('aria-selected', 'true')
+    fireEvent.click(screen.getByRole('tab', { name: 'Likely to block 0' }))
+    expect(screen.getByText('Nothing likely to block.')).toBeInTheDocument()
   })
 
   it('never renders a raw secret or NRIC', async () => {
